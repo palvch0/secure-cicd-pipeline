@@ -205,3 +205,22 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+# Środowisko wirtualne
+venv/
+.venv/
+
+#Pliki środowiskowe (Nigdy nie commituj hasel)
+.env
+.env.local
+
+#Pliki IDE
+.vscode/settings.json
+__pycache__/
+*.pyc 
+
+#Docker
+.docker/
+
+#Raporty bezpieczenstwa
+reports/
+*.sarif
