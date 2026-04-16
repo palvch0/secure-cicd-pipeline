@@ -41,10 +41,10 @@ jobs:
           docker run --rm \
             --network host \
             -v $(pwd)/zap-reports:/zap/wrk/:rw \
-            -v $(pwd)/.zap:/zap/rules/:rw \
             ghcr.io/zaproxy/zaproxy:stable \
-            zap-full-scan.py \
+            zap-api-scan.py \
             -t http://localhost:8000 \
+            -f openapi \
             -r zap-report.html \
             -I || true
 
