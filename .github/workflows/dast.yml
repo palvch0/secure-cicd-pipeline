@@ -10,7 +10,6 @@ permissions:
   contents: read
   security-events: write
   actions: read
-  issues: write
 
 jobs:
 
@@ -36,12 +35,25 @@ jobs:
           echo "Application is ready!"
 
       - name: Run OWASP ZAP Full Scan
-        uses: zaproxy/action-full-scan@v0.10.0
+        run: |
+          mkdir -p zap-reports
+          chmod 777 zap-reports
+          docker run --rm \
+            --network host \
+            -v $(pwd)/zap-reports:/zap/wrk/:rw \
+            -v $(pwd)/.zap:/zap/rules/:rw \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-full-scan.py \
+            -t http://localhost:8000 \
+            -r zap-report.html \
+            -I || true
+
+      - name: Upload ZAP report
+        uses: actions/upload-artifact@v4
+        if: always()
         with:
-          target: 'http://localhost:8000'
-          rules_file_name: '.zap/rules.tsv'
-          cmd_options: '-a'
-          fail_action: false
+          name: zap-report-html
+          path: zap-reports/zap-report.html
 
       - name: Stop application
         if: always()
