@@ -42,14 +42,13 @@ jobs:
           target: 'http://localhost:8000'
           rules_file_name: '.zap/rules.tsv'
           cmd_options: '-a'
-          allow_issue_filing: false
           fail_action: false
 
-      - name: Upload ZAP report
+      - name: Upload ZAP HTML report
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: zap-report
+          name: zap-report-html
           path: report_html.html
 
       - name: Upload ZAP SARIF to GitHub Security
