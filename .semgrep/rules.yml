@@ -1,0 +1,30 @@
+rules:
+  - id: detect-md5-weak-hashing
+    patterns:
+      - pattern: hashlib.md5(...)
+    message: |
+      Wykryto uzycie MD5 do hashowania. MD5 jest kryptograficznie zlamany
+      i nie powinien byc uzywany do hasel ani weryfikacji integralnosci.
+      Uzyj zamiast tego: hashlib.sha256() lub biblioteki bcrypt/argon2.
+    languages: [python]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: CWE-327
+      owasp: A02:2021 - Cryptographic Failures
+
+  - id: detect-raw-sql-string-format
+    patterns:
+      - pattern: |
+          $QUERY = f"...{...}..."
+          $DB.execute(text($QUERY))
+    message: |
+      Wykryto potencjalny SQL Injection - zapytanie SQL zbudowane przez
+      formatowanie stringa z danymi uzytkownika. Uzyj zapytan
+      parametryzowanych: db.execute(text("... :param"), {"param": value})
+    languages: [python]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: CWE-89
+      owasp: A03:2021 - Injection

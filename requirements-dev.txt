@@ -1,0 +1,6 @@
+bandit[sarif]==1.9.4
+semgrep==1.159.0
+pip-audit==2.10.0
+pytest==9.0.3
+httpx==0.28.1
+checkov

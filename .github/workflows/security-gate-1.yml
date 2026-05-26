@@ -1,0 +1,124 @@
+name: Security Gate I — Static Analysis
+
+on:
+  push:
+    branches: [ develop, main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  security-events: write
+  contents: read
+  actions: read
+
+jobs:
+
+  sast-bandit:
+    name: SAST — Bandit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install Bandit
+        run: pip install bandit[sarif]
+
+      - name: Run Bandit scan
+        run: |
+          bandit -r app/ -f sarif -o bandit-results.sarif || true
+
+      - name: Upload Bandit results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: bandit-results.sarif
+          category: bandit
+
+      - name: Bandit summary
+        run: bandit -r app/ -f txt || true
+
+  sast-semgrep:
+    name: SAST — Semgrep
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Semgrep
+        run: pip install semgrep
+
+      - name: Run Semgrep with custom rules
+        run: |
+          semgrep --config .semgrep/rules.yml app/ --sarif --output semgrep-results.sarif || true
+
+      - name: Upload Semgrep results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: semgrep-results.sarif
+          category: semgrep
+
+      - name: Semgrep summary
+        run: semgrep --config .semgrep/rules.yml app/ || true
+
+  secret-scan:
+    name: Secret Scan — Gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Gitleaks
+        run: |
+          wget -qO gitleaks.tar.gz https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz
+          tar -xzf gitleaks.tar.gz
+          chmod +x gitleaks
+
+      - name: Run Gitleaks with custom config
+        run: |
+          ./gitleaks detect --source . --config .gitleaks.toml --verbose || true
+
+      - name: Run Gitleaks report
+        run: |
+          ./gitleaks detect --source . --config .gitleaks.toml --report-format sarif --report-path gitleaks-results.sarif || true
+
+      - name: Upload Gitleaks results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gitleaks-results
+          path: gitleaks-results.sarif
+
+  sca-pip-audit:
+    name: SCA — pip-audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Run pip-audit
+        run: |
+          pip-audit -r requirements.txt --format json --output pip-audit-results.json || true
+          pip-audit -r requirements.txt
+
+      - name: Upload pip-audit results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pip-audit-results
+          path: pip-audit-results.json

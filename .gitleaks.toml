@@ -1,0 +1,22 @@
+title = "Gitleaks Config — Secure CI/CD Pipeline"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "python-hardcoded-secret-key"
+description = "Hardcoded SECRET_KEY w kodzie Python"
+regex = '''SECRET_KEY\s*=\s*["'][^"']{8,}["']'''
+severity = "ERROR"
+tags = ["python", "secret", "hardcoded"]
+
+[[rules]]
+id = "python-hardcoded-db-password"
+description = "Haslo do bazy danych w connection string"
+regex = '''postgresql://[^:]+:[^@]{4,}@'''
+severity = "ERROR"
+tags = ["python", "database", "password"]
+
+[allowlist]
+regexes = ['''example_''', '''sample_''', '''test_''', '''dummy_''']
+paths = ['''venv/''', '''requirements\.txt''']

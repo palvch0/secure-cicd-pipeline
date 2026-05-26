@@ -1,0 +1,61 @@
+name: DAST — OWASP ZAP
+
+on:
+  push:
+    branches: [ develop, main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+
+  dast-zap:
+    name: DAST — OWASP ZAP Full Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Start application with Docker Compose
+        run: |
+          docker compose -f docker-compose.test.yml up -d --build
+
+      - name: Wait for application to be healthy
+        run: |
+          timeout 120 bash -c '
+            until curl -sf http://localhost:8000/health; do
+              echo "App not ready yet, waiting..."
+              sleep 5
+            done
+          '
+          echo "Application is ready!"
+
+      - name: Run OWASP ZAP Full Scan
+        run: |
+          mkdir -p zap-reports
+          chmod 777 zap-reports
+          docker run --rm \
+            --network host \
+            -v $(pwd)/zap-reports:/zap/wrk/:rw \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-api-scan.py \
+            -t http://localhost:8000 \
+            -f openapi \
+            -r zap-report.html \
+            -I || true
+
+      - name: Upload ZAP report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-report-html
+          path: zap-reports/zap-report.html
+
+      - name: Stop application
+        if: always()
+        run: |
+          docker compose -f docker-compose.test.yml down

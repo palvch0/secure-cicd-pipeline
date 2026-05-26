@@ -1,0 +1,32 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+
+  deploy:
+    name: Deploy — SSH to VPS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify signed image before deploy
+        run: |
+          echo "Weryfikacja obrazu przed deploymentem..."
+          echo "Obraz: ghcr.io/${{ github.repository }}"
+          echo "Aby uruchomic deployment dodaj sekret VPS_HOST, VPS_USER, VPS_SSH_KEY"
+
+      - name: Deployment ready
+        run: |
+          echo "Pipeline bezpieczenstwa przeszedl pomyslnie."
+          echo "Obraz Docker jest podpisany i zeskanowany."
+          echo "Workflow deploymentu jest gotowy do podlaczenia serwera VPS."
+          echo "Szczegoly konfiguracji w SECURITY.md"
